@@ -25,8 +25,8 @@ class chenry_utility_module:
     # the latter method is running.
     ######################################### noqa
     VERSION = "0.0.1"
-    GIT_URL = ""
-    GIT_COMMIT_HASH = ""
+    GIT_URL = "https://github.com/cshenry/chenry_utility_module.git"
+    GIT_COMMIT_HASH = "7dbdda2ebd908f2fa0d502047391c1d0805a6f77"
 
     #BEGIN_CLASS_HEADER
     #END_CLASS_HEADER
@@ -44,7 +44,7 @@ class chenry_utility_module:
         pass
 
 
-    def wait_for_signal(self, ctx, params):
+    def activate_callback_server(self, ctx, params):
         """
         :param params: instance of mapping from String to unspecified object
         :returns: instance of type "ReportResults" -> structure: parameter
@@ -52,22 +52,22 @@ class chenry_utility_module:
         """
         # ctx is the context object
         # return variables are: output
-        #BEGIN wait_for_signal
+        #BEGIN activate_callback_server
         f = open("/kb/module/work/CallBack.txt","w")
         f.write(self.callback_url)
         f.close()
         end = False
         while end == False:
-        	time.sleep(10)
-        	if exists("/kb/module/work/__DONE__"):
-        		end = True
+            time.sleep(10)
+            if exists("/kb/module/work/__DONE__"):
+                end = True
         output = {}
         os.remove("/kb/module/work/__DONE__")
-        #END wait_for_signal
+        #END activate_callback_server
 
         # At some point might do deeper type checking...
         if not isinstance(output, dict):
-            raise ValueError('Method wait_for_signal return value ' +
+            raise ValueError('Method activate_callback_server return value ' +
                              'output is not type dict as required.')
         # return the results
         return [output]

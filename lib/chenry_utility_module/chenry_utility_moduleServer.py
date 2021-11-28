@@ -338,10 +338,10 @@ class Application(object):
         self.serverlog.set_log_level(6)
         self.rpc_service = JSONRPCServiceCustom()
         self.method_authentication = dict()
-        self.rpc_service.add(impl_chenry_utility_module.wait_for_signal,
-                             name='chenry_utility_module.wait_for_signal',
+        self.rpc_service.add(impl_chenry_utility_module.activate_callback_server,
+                             name='chenry_utility_module.activate_callback_server',
                              types=[dict])
-        self.method_authentication['chenry_utility_module.wait_for_signal'] = 'required'  # noqa
+        self.method_authentication['chenry_utility_module.activate_callback_server'] = 'required'  # noqa
         self.rpc_service.add(impl_chenry_utility_module.status,
                              name='chenry_utility_module.status',
                              types=[dict])

@@ -8,6 +8,6 @@ module chenry_utility_module {
         string report_ref;
     } ReportResults;
 	
-    funcdef wait_for_signal(mapping<string,UnspecifiedObject> params) returns (ReportResults output) authentication required;
+    funcdef activate_callback_server(mapping<string,UnspecifiedObject> params) returns (ReportResults output) authentication required;
 
 };
