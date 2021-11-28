@@ -4,6 +4,7 @@ import logging
 import os
 import time
 from os.path import exists
+from shutil import copyfile
 
 logger = logging.getLogger(__name__)
 
@@ -30,15 +31,19 @@ def debug_module(module_dir,sdk_home = None,shared_port = None):
     port = ""
     if shared_port != None:
         port = " -p "+shared_port+":"+shared_port        
+    print("You need to run kb-sdk test at least once before this command to re-build the docker image with the latest code.")
+    print("If you update the code in this module, you need to run kb-sdk test again for these changes to take effect in this debug environment.")
     print("Once logged in. run this command to install jupyter if not already installed: pip install notebook")
     print("If you are running this alot, we recomend adding \"RUN pip install notebook\" to your dockerfile")
     print("Once inside the container, run this command to activate jupyter server: jupyter notebook --ip 0.0.0.0 --no-browser --allow-root")
     print("Then you can reach your notebook from this address on your browser: http://localhost:"+port+"/")
-    os.system(script_dir+"/run_docker.sh run"+port+" -i -t -v "+script_dir+"/workdir:/kb/module/work -v "+sdk_home+"/run_local/workdir/tmp:/kb/module/work/tmp -v "+script_dir+"/refdata:/data:ro -e \"SDK_CALLBACK_URL="+callback+"\" test/"+module_name+":latest bash")
+    os.system(script_dir+"/run_docker.sh run"+port+" -i -t -v "+script_dir+"/workdir:/kb/module/work -v "+sdk_home+"/run_local/workdir/tmp:/kb/module/work/tmp -v "+script_dir+"/refdata:/data:ro -e \"SDK_CALLBACK_URL="+callback+"\" test/"+module_name.lower()+":latest bash")
 
 def set_sdk_home(sdk_home,env_file):
     print("Don't forget to source you environment file after running this command!")
     if exists(env_file):
+        print("Backing up environment file just in case!")
+        copyfile(env_file,env_file+"_sdk_bkup")
         output = ""
         text_file = open(env_file, "r")
         data = text_file.read()
