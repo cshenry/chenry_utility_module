@@ -8,7 +8,40 @@ from shutil import copyfile
 
 logger = logging.getLogger(__name__)
 
-def debug_module(module_dir,sdk_home = None,shared_port = None):
+scriptfile = [
+    '#!/bin/bash',
+    'script_dir="$(cd "$(dirname "$(readlink -f "$0")")" && pwd)"',
+    'cd $script_dir/..',
+    'if [ -f "$script_dir/refdata/__READY__" ]; then',
+    '    echo "Reference data initialization is skipped because it was already prepared"',
+    'else',
+    '    echo "Reference data initialization"',
+    '    if [ -d "$script_dir/refdata" ]; then',
+    '        rm -r $script_dir/refdata/*',
+    '    else',
+    '        mkdir $script_dir/refdata',
+    '    fi',
+    'fi',
+    'if [ !-f "$script_dir/refdata/__READY__" ]; then',
+    '    echo "ERROR: __READY__ file is not detected. Reference data initialization wasnt done correctly."',
+    '    exit 1',
+    'fi'
+]
+
+def rebuild_module(module_dir):
+    cwd = os.getcwd()
+    os.chdir(module_dir)
+    #Temporarily copying test script to a new file
+    copyfile(module_dir+"/test_local/run_tests.sh",module_dir+"/test_local/backup.sh")
+    text_file = open(module_dir+"/test_local/run_tests.sh", "w")
+    text_file.write("\n".join(scriptfile))
+    text_file.close()
+    os.system("kb-sdk test")
+    #Restoring test script
+    copyfile(module_dir+"/test_local/backup.sh",module_dir+"/test_local/run_tests.sh")
+    os.chdir(cwd)
+
+def debug_module(module_dir,sdk_home = None,shared_port = None,mountlib = 0,rebuild = 0):
     if shared_port == None:
         shared_port = "8888"
     if isinstance(shared_port, int):
@@ -37,7 +70,13 @@ def debug_module(module_dir,sdk_home = None,shared_port = None):
     print("If you are running this alot, we recomend adding \"RUN pip install notebook\" to your dockerfile")
     print("Once inside the container, run this command to activate jupyter server: jupyter notebook --ip 0.0.0.0 --no-browser --allow-root")
     print("Then you can reach your notebook from this address on your browser: http://localhost:"+port+"/")
-    os.system(script_dir+"/run_docker.sh run"+port+" -i -t -v "+script_dir+"/workdir:/kb/module/work -v "+sdk_home+"/run_local/workdir/tmp:/kb/module/work/tmp -v "+script_dir+"/refdata:/data:ro -e \"SDK_CALLBACK_URL="+callback+"\" test/"+module_name.lower()+":latest bash")
+    if rebuild == 1:
+        rebuild_module(module_dir)
+    libmount = ""
+    if mountlib == 1:
+        libmount = " -v "+script_dir+"/../lib:/kb/module/lib"
+    print("Mount:"+libmount)
+    os.system(script_dir+"/run_docker.sh run"+port+" -i -t"+libmount+" -v "+script_dir+"/workdir:/kb/module/work -v "+sdk_home+"/run_local/workdir/tmp:/kb/module/work/tmp -v "+script_dir+"/refdata:/data:ro -e \"SDK_CALLBACK_URL="+callback+"\" test/"+module_name.lower()+":latest bash")
 
 def set_sdk_home(sdk_home,env_file):
     print("Don't forget to source you environment file after running this command!")
@@ -74,7 +113,7 @@ def stop_callback_server(sdk_home = None):
 my_parser = argparse.ArgumentParser(description='Run one or more SDK utilities')
 my_parser.add_argument('Command',
     type=str,
-    choices=["home","startcb","debug","stopcb"],
+    choices=["home","startcb","debug","stopcb","rebuild"],
     help='select the command to be run')
 if len(sys.argv) <= 2:  
     args = my_parser.parse_args()
@@ -108,8 +147,16 @@ elif sys.argv[1] == "debug":
         type=str,
         default=None,
         help='port for jupyter notebook (defaults to 8888)')
+    my_parser.add_argument('--rebuild',
+        type=int,
+        default=0,
+        help='rebuild the container before running')
+    my_parser.add_argument('--mountlib',
+        type=int,
+        default=0,
+        help='mount library directory')
     args = my_parser.parse_args()
-    debug_module(args.Module,args.sdkhome,args.port)
+    debug_module(args.Module,args.sdkhome,args.port,args.mountlib,args.rebuild)
 elif sys.argv[1] == "stopcb":
     my_parser.add_argument('--sdkhome',
         type=str,
@@ -117,3 +164,9 @@ elif sys.argv[1] == "stopcb":
         help='SDK home (defaults to KB_SDK_HOME)')
     args = my_parser.parse_args()
     stop_callback_server(args.sdkhome)
+elif sys.argv[1] == "rebuild":
+    my_parser.add_argument('Module',
+        type=str,
+        help='directory of module to debug')
+    args = my_parser.parse_args()
+    rebuild_module(args.Module)
