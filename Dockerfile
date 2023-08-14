@@ -1,4 +1,4 @@
-FROM kbase/sdkbase2:python
+FROM kbase/sdkpython:3.8.0
 MAINTAINER chenry@anl.gov
 # -----------------------------------------
 # In this section, you can install any system dependencies required
