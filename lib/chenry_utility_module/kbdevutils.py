@@ -20,6 +20,8 @@ from kbbasemodules.basemodule import BaseModule
 import logging
 
 logger = logging.getLogger(__name__)
+logging.basicConfig(format='%(created)s %(levelname)s: %(message)s',
+                            level=logging.INFO)
 
 class KBDevUtils(BaseModule):
     def __init__(self,study_name,token_file=str(Path.home()) + '/.kbase/token',ws_version="prod"):
@@ -36,11 +38,12 @@ class KBDevUtils(BaseModule):
         callback = None
         with open(config["callback_file"], 'r') as fh:
             callback = fh.read()
-        self.study_name = study_name
+        
         BaseModule.__init__(self,"KBDevUtils."+study_name,config,"/scratch/shared/code/chenry_utility_module/",str(Path.home()) + "/scratch/" + study_name,token,{"Workspace":Workspace(wsurl, token=token)},callback)
+        
         self.version = "0.1.1.kbdu"
-        logging.basicConfig(format='%(created)s %(levelname)s: %(message)s',
-                            level=logging.INFO)
+        self.study_name = study_name
+        self.msrecon = None
     
     def msseedrecon(self):
         if self.msrecon == None:
