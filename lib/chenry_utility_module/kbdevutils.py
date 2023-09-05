@@ -15,6 +15,7 @@ for nameval in config_parse.items("DevEnv"):
     config[nameval[0]] = nameval[1]
 sys.path = config["syspaths"].split(";") + sys.path
 
+from installed_clients.WorkspaceClient import Workspace
 from kbbasemodules.basemodule import BaseModule
 import logging
 
