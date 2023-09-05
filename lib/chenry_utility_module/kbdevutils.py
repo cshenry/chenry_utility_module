@@ -6,6 +6,15 @@ import os
 from os.path import exists
 from pathlib import Path
 from configparser import ConfigParser
+
+config_parse = ConfigParser()
+config_parse.read(config_file)
+config = {}
+for nameval in config_parse.items("DevEnv"):
+    config[nameval[0]] = nameval[1]
+sys.path = config["syspaths"].split(";") + sys.path
+
+from kbbasemodules.basemodule import BaseModule
 import logging
 
 logger = logging.getLogger(__name__)
@@ -19,13 +28,6 @@ class KBDevUtils(BaseModule):
             wsurl = "https://appdev.kbase.us/services/ws"
         elif ws_version == "ci":
             wsurl = "https://ci.kbase.us/services/ws"    
-        config_parse = ConfigParser()
-        config_parse.read(config_file)
-        config = {}
-        for nameval in config_parse.items("DevEnv"):
-            config[nameval[0]] = nameval[1]
-        self.paths = config["syspaths"].split(";")
-        sys.path = self.paths + sys.path
         token = None
         with open(token_file, 'r') as fh:
             token = fh.read().strip()
@@ -33,7 +35,6 @@ class KBDevUtils(BaseModule):
         with open(config["callback_file"], 'r') as fh:
             callback = fh.read()
         self.study_name = study_name
-        from kbbasemodules.basemodule import BaseModule
         BaseModule.__init__(self,"KBDevUtils."+study_name,config,"/scratch/shared/code/chenry_utility_module/",str(Path.home()) + "/scratch/" + study_name,token,{"Workspace":Workspace(wsurl, token=token)},callback)
         self.version = "0.1.1.kbdu"
         logging.basicConfig(format='%(created)s %(levelname)s: %(message)s',
