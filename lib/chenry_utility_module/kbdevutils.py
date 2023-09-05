@@ -7,6 +7,7 @@ from os.path import exists
 from pathlib import Path
 from configparser import ConfigParser
 
+config_file = os.environ.get("KBDEVUTIL_CONFIG", "/scratch/shared/code/sharedconfig.cfg")
 config_parse = ConfigParser()
 config_parse.read(config_file)
 config = {}
@@ -20,7 +21,7 @@ import logging
 logger = logging.getLogger(__name__)
 
 class KBDevUtils(BaseModule):
-    def __init__(self,study_name,config_file="/scratch/shared/code/sharedconfig.cfg",token_file=str(Path.home()) + '/.kbase/token',ws_version="prod"):
+    def __init__(self,study_name,token_file=str(Path.home()) + '/.kbase/token',ws_version="prod"):
         wsurl = None
         if ws_version == "prod":
             wsurl = "https://kbase.us/services/ws"
