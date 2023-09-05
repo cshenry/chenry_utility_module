@@ -342,6 +342,10 @@ class Application(object):
                              name='chenry_utility_module.activate_callback_server',
                              types=[dict])
         self.method_authentication['chenry_utility_module.activate_callback_server'] = 'required'  # noqa
+        self.rpc_service.add(impl_chenry_utility_module.run_command,
+                             name='chenry_utility_module.run_command',
+                             types=[dict])
+        self.method_authentication['chenry_utility_module.run_command'] = 'required'  # noqa
         self.rpc_service.add(impl_chenry_utility_module.status,
                              name='chenry_utility_module.status',
                              types=[dict])

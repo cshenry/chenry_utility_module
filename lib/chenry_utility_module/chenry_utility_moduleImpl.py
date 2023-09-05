@@ -26,7 +26,7 @@ class chenry_utility_module:
     ######################################### noqa
     VERSION = "0.0.1"
     GIT_URL = "https://github.com/cshenry/chenry_utility_module.git"
-    GIT_COMMIT_HASH = "7dbdda2ebd908f2fa0d502047391c1d0805a6f77"
+    GIT_COMMIT_HASH = "7e3c1c0b7787459f745d935444e44eb08ab38380"
 
     #BEGIN_CLASS_HEADER
     #END_CLASS_HEADER
@@ -47,8 +47,7 @@ class chenry_utility_module:
     def activate_callback_server(self, ctx, params):
         """
         :param params: instance of mapping from String to unspecified object
-        :returns: instance of type "ReportResults" -> structure: parameter
-           "report_name" of String, parameter "report_ref" of String
+        :returns: instance of mapping from String to unspecified object
         """
         # ctx is the context object
         # return variables are: output
@@ -68,6 +67,30 @@ class chenry_utility_module:
         # At some point might do deeper type checking...
         if not isinstance(output, dict):
             raise ValueError('Method activate_callback_server return value ' +
+                             'output is not type dict as required.')
+        # return the results
+        return [output]
+
+    def run_command(self, ctx, params):
+        """
+        :param params: instance of mapping from String to unspecified object
+        :returns: instance of mapping from String to unspecified object
+        """
+        # ctx is the context object
+        # return variables are: output
+        #BEGIN run_command
+        output = {}
+        if params["command"] == "clear":
+            os.system("rm -rf /kb/module/work/tmp/*")
+            output["comments"] = "Temp directory cleared"
+        if params["command"] == "perms":
+            os.system("chmod a+w -R /kb/module/work/tmp")
+            output["comments"] = "Write perms granted to temp directory"
+        #END run_command
+
+        # At some point might do deeper type checking...
+        if not isinstance(output, dict):
+            raise ValueError('Method run_command return value ' +
                              'output is not type dict as required.')
         # return the results
         return [output]
