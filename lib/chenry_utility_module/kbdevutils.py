@@ -6,8 +6,6 @@ import os
 from os.path import exists
 from pathlib import Path
 from configparser import ConfigParser
-from kbbasemodules.basemodule import BaseModule
-from installed_clients.WorkspaceClient import Workspace
 import logging
 
 logger = logging.getLogger(__name__)
@@ -35,6 +33,7 @@ class KBDevUtils(BaseModule):
         with open(config["callback_file"], 'r') as fh:
             callback = fh.read()
         self.study_name = study_name
+        from kbbasemodules.basemodule import BaseModule
         BaseModule.__init__(self,"KBDevUtils."+study_name,config,"/scratch/shared/code/chenry_utility_module/",str(Path.home()) + "/scratch/" + study_name,token,{"Workspace":Workspace(wsurl, token=token)},callback)
         self.version = "0.1.1.kbdu"
         logging.basicConfig(format='%(created)s %(levelname)s: %(message)s',
