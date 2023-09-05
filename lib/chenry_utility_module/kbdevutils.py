@@ -48,13 +48,13 @@ class KBDevUtils(BaseModule):
     def msseedrecon(self):
         if self.msrecon == None:
             from ModelSEEDReconstruction.modelseedrecon import ModelSEEDRecon
-            self.msrecon = ModelSEEDRecon(self.config,self.config["module_directory"]+"/KB-ModelSEEDReconstruction/",self.module_dir,self.token,self.clients,self.callback)
+            self.msrecon = ModelSEEDRecon(self.config,self.config["module_directory"]+"/KB-ModelSEEDReconstruction/",self.module_dir,self.token,self.clients,self.callback_url)
         return self.msrecon
     
     def devutil_client(self):
         if "KBDevUtils" not in self.clients:
             from installed_clients.chenry_utility_moduleClient import chenry_utility_module
-            self.clients["KBDevUtils"] = chenry_utility_module(self.callback,token=self.token)
+            self.clients["KBDevUtils"] = chenry_utility_module(self.callback_url,token=self.token)
         return self.clients["KBDevUtils"]
         
     def clear_sdk_dir(self):
