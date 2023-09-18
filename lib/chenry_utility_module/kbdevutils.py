@@ -24,7 +24,7 @@ logging.basicConfig(format='%(created)s %(levelname)s: %(message)s',
                             level=logging.INFO)
 
 class KBDevUtils(BaseModule):
-    def __init__(self,study_name,token_file=str(Path.home()) + '/.kbase/token',ws_version="prod"):
+    def __init__(self,study_name,token_file=str(Path.home()) + '/.kbase/token',ws_version="prod",sdkhome="sdkhome"):
         wsurl = None
         if ws_version == "prod":
             wsurl = "https://kbase.us/services/ws"
@@ -35,10 +35,11 @@ class KBDevUtils(BaseModule):
         token = None
         with open(token_file, 'r') as fh:
             token = fh.read().strip()
-        callback = None
-        with open(config["callback_file"], 'r') as fh:
-            callback = fh.read()
-        
+        self.root_path = config["callback_path"]
+        self.callback_file = self.root_path+"/"+sdkhome+"/kb_sdk_home/run_local/workdir/CallBack.txt"
+        self.working_directory = self.root_path+"/"+sdkhome+"/kb_sdk_home/run_local/workdir/tmp/"
+        with open(self.callback_file, 'r') as fh:
+            callback = fh.read()        
         BaseModule.__init__(self,"KBDevUtils."+study_name,config,config["module_directory"]+"/chenry_utility_module/",str(Path.home()) + "/scratch/" + study_name,token,{"Workspace":Workspace(wsurl, token=token)},callback)
         print("Output files printed to:"+self.working_dir)
         self.version = "0.1.1.kbdu"
