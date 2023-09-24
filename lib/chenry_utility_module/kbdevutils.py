@@ -24,7 +24,7 @@ logging.basicConfig(format='%(created)s %(levelname)s: %(message)s',
                             level=logging.INFO)
 
 class KBDevUtils(BaseModule):
-    def __init__(self,study_name,token_file=str(Path.home()) + '/.kbase/token',ws_version="prod",sdkhome="sdkhome"):
+    def __init__(self,study_name,token_file=str(Path.home()) + '/.kbase/token',ws_version="prod",sdkhome="sdkhome",public_output=True):
         wsurl = None
         if ws_version == "prod":
             wsurl = "https://kbase.us/services/ws"
@@ -39,13 +39,14 @@ class KBDevUtils(BaseModule):
         self.private_output_path = config["private_output_path"]
         if self.private_output_path[0] != "/":
             self.private_output_path = str(Path.home())+"/"+self.private_output_path
+        self.public_output = public_output
         self.public_output_path = config["public_output_path"]
         self.callback_file = self.root_path+"/"+sdkhome+"/kb_sdk_home/run_local/workdir/CallBack.txt"
         self.working_directory = self.root_path+"/"+sdkhome+"/kb_sdk_home/run_local/workdir/tmp/"
         with open(self.callback_file, 'r') as fh:
             callback = fh.read()        
         BaseModule.__init__(self,"KBDevUtils."+study_name,config,config["module_directory"]+"/chenry_utility_module/",str(Path.home()) + "/scratch/" + study_name,token,{"Workspace":Workspace(wsurl, token=token)},callback)
-        print("Output files printed to:"+self.working_dir)
+        print("Output files printed to:"+self.notebook_output_dir())
         self.version = "0.1.1.kbdu"
         self.study_name = study_name
         self.msrecon = None
@@ -68,9 +69,11 @@ class KBDevUtils(BaseModule):
     def sdk_dir_perms(self):
         return self.devutil_client().run_command({"command":"perms"})
     
-    def notebook_output_dir(self,private=True,create=True):
+    def notebook_output_dir(self,public_output=None,create=True):
+        if not public_output:
+            public_output = self.public_output
         output_path = self.private_output_path+"/"+self.study_name+"/"
-        if not private:
+        if public_output:
             output_path = self.public_output_path+"/"+self.study_name+"/output/"
         if create:
             if not exists(output_path):
