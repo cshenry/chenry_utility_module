@@ -46,9 +46,9 @@ class KBDevUtils(BaseModule):
         with open(self.callback_file, 'r') as fh:
             callback = fh.read()        
         BaseModule.__init__(self,"KBDevUtils."+study_name,config,config["module_directory"]+"/chenry_utility_module/",str(Path.home()) + "/scratch/" + study_name,token,{"Workspace":Workspace(wsurl, token=token)},callback)
-        print("Output files printed to:"+self.notebook_output_dir())
         self.version = "0.1.1.kbdu"
         self.study_name = study_name
+        print("Output files printed to:"+self.notebook_output_dir())
         self.msrecon = None
     
     def msseedrecon(self):
