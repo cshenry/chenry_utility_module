@@ -36,6 +36,10 @@ class KBDevUtils(BaseModule):
         with open(token_file, 'r') as fh:
             token = fh.read().strip()
         self.root_path = config["callback_path"]
+        self.private_output_path = config["private_output_path"]
+        if self.private_output_path[0] != "/":
+            self.private_output_path = Path.home()+"/"+self.private_output_path
+        self.public_output_path = config["public_output_path"]
         self.callback_file = self.root_path+"/"+sdkhome+"/kb_sdk_home/run_local/workdir/CallBack.txt"
         self.working_directory = self.root_path+"/"+sdkhome+"/kb_sdk_home/run_local/workdir/tmp/"
         with open(self.callback_file, 'r') as fh:
@@ -63,4 +67,13 @@ class KBDevUtils(BaseModule):
         
     def sdk_dir_perms(self):
         return self.devutil_client().run_command({"command":"perms"})
+    
+    def notebook_output_dir(self,private=True,create=True):
+        output_path = self.private_output_path+"/"+self.study_name+"/"
+        if not private:
+            output_path = self.public_output_path+"/"+self.study_name+"/output/"
+        if create:
+            if not exists(output_path):
+                os.makedirs(output_path, exist_ok=True)
+        return output_path
         
