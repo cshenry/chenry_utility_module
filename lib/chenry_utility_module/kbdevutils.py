@@ -38,7 +38,7 @@ class KBDevUtils(BaseModule):
         self.root_path = config["callback_path"]
         self.private_output_path = config["private_output_path"]
         if self.private_output_path[0] != "/":
-            self.private_output_path = Path.home()+"/"+self.private_output_path
+            self.private_output_path = str(Path.home())+"/"+self.private_output_path
         self.public_output_path = config["public_output_path"]
         self.callback_file = self.root_path+"/"+sdkhome+"/kb_sdk_home/run_local/workdir/CallBack.txt"
         self.working_directory = self.root_path+"/"+sdkhome+"/kb_sdk_home/run_local/workdir/tmp/"
