@@ -24,7 +24,7 @@ logging.basicConfig(format='%(created)s %(levelname)s: %(message)s',
                             level=logging.INFO)
 
 class KBDevUtils(BaseModule):
-    def __init__(self,study_name,token_file=str(Path.home()) + '/.kbase/token',ws_version="prod",sdkhome="sdkhome",public_output=True):
+    def __init__(self,study_name,token_file=str(Path.home()) + '/.kbase/token',ws_version="prod",sdkhome=None,output_root=None):
         wsurl = None
         if ws_version == "prod":
             wsurl = "https://kbase.us/services/ws"
@@ -36,11 +36,17 @@ class KBDevUtils(BaseModule):
         with open(token_file, 'r') as fh:
             token = fh.read().strip()
         self.root_path = config["callback_path"]
-        self.private_output_path = config["private_output_path"]
-        if self.private_output_path[0] != "/":
-            self.private_output_path = str(Path.home())+"/"+self.private_output_path
-        self.public_output = public_output
-        self.public_output_path = config["public_output_path"]
+        if output_root:
+            self.output_root = output_root
+        else:
+            self.output_root = config["output_root"]
+        if self.output_root[0] != "/":
+            self.output_root = str(Path.home())+"/"+self.output_root
+        if not sdkhome:
+            if ws_version == "prod":
+                sdkhome = config["prod_sdk_home"]
+            elif ws_version == "appdev":
+                sdkhome = config["appdev_sdk_home"]
         self.callback_file = self.root_path+"/"+sdkhome+"/kb_sdk_home/run_local/workdir/CallBack.txt"
         self.working_directory = self.root_path+"/"+sdkhome+"/kb_sdk_home/run_local/workdir/tmp/"
         with open(self.callback_file, 'r') as fh:
@@ -69,12 +75,8 @@ class KBDevUtils(BaseModule):
     def sdk_dir_perms(self):
         return self.devutil_client().run_command({"command":"perms"})
     
-    def notebook_output_dir(self,public_output=None,create=True):
-        if not public_output:
-            public_output = self.public_output
-        output_path = self.private_output_path+"/"+self.study_name+"/"
-        if public_output:
-            output_path = self.public_output_path+"/"+self.study_name+"/output/"
+    def notebook_output_dir(self,create=True):
+        output_path = self.output_root+"/"+self.study_name+"/"
         if create:
             if not exists(output_path):
                 os.makedirs(output_path, exist_ok=True)
