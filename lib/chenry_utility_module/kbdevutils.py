@@ -54,7 +54,7 @@ class KBDevUtils(BaseModule):
         BaseModule.__init__(self,"KBDevUtils."+study_name,config,config["module_directory"]+"/chenry_utility_module/",str(Path.home()) + "/scratch/" + study_name,token,{"Workspace":Workspace(wsurl, token=token)},callback)
         self.version = "0.1.1.kbdu"
         self.study_name = study_name
-        print("Output files printed to:"+self.notebook_output_dir())
+        print("Output files printed to:"+self.out_dir()+" when using KBDevUtils.out_dir()")
         self.msrecon = None
     
     def msseedrecon(self):
@@ -75,7 +75,7 @@ class KBDevUtils(BaseModule):
     def sdk_dir_perms(self):
         return self.devutil_client().run_command({"command":"perms"})
     
-    def notebook_output_dir(self,create=True):
+    def out_dir(self,create=True):
         output_path = self.output_root+"/"+self.study_name+"/"
         if create:
             if not exists(output_path):
