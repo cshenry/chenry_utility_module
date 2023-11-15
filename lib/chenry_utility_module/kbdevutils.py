@@ -7,13 +7,18 @@ from os.path import exists
 from pathlib import Path
 from configparser import ConfigParser
 
-config_file = os.environ.get("KBDEVUTIL_CONFIG", "/scratch/shared/code/sharedconfig.cfg")
+codebase = os.environ.get("CODE_BASE","/scratch/shared/code")
+config_file = os.environ.get("KBDEVUTIL_CONFIG", codebase+"/sharedconfig.cfg")
 config_parse = ConfigParser()
 config_parse.read(config_file)
 config = {}
 for nameval in config_parse.items("DevEnv"):
     config[nameval[0]] = nameval[1]
-sys.path = config["syspaths"].split(";") + sys.path
+paths = config["syspaths"].split(";")
+for i,filepath in enumerate(paths):
+    if filepath[0:1] != "/":
+        paths[i] = codebase+"/"+filepath
+sys.path = paths + sys.path
 
 from installed_clients.WorkspaceClient import Workspace
 from kbbasemodules.basemodule import BaseModule
@@ -35,23 +40,25 @@ class KBDevUtils(BaseModule):
         token = None
         with open(token_file, 'r') as fh:
             token = fh.read().strip()
-        self.root_path = config["callback_path"]
+        self.root_path = config.get("callback_path","")    
         if output_root:
             self.output_root = output_root
         else:
-            self.output_root = config["output_root"]
+            self.output_root = config.get("output_root","KBaseAnalysis/")
         if self.output_root[0] != "/":
             self.output_root = str(Path.home())+"/"+self.output_root
         if not sdkhome:
             if ws_version == "prod":
-                sdkhome = config["prod_sdk_home"]
+                sdkhome = config.get("prod_sdk_home","prod")
             elif ws_version == "appdev":
-                sdkhome = config["appdev_sdk_home"]
+                sdkhome = config.get("appdev_sdk_home","appdev")
         self.callback_file = self.root_path+"/"+sdkhome+"/kb_sdk_home/run_local/workdir/CallBack.txt"
         self.working_directory = self.root_path+"/"+sdkhome+"/kb_sdk_home/run_local/workdir/tmp/"
-        with open(self.callback_file, 'r') as fh:
-            callback = fh.read()        
-        BaseModule.__init__(self,"KBDevUtils."+study_name,config,config["module_directory"]+"/chenry_utility_module/",str(Path.home()) + "/scratch/" + study_name,token,{"Workspace":Workspace(wsurl, token=token)},callback)
+        callback = None
+        if exists(self.callback_file):
+            with open(self.callback_file, 'r') as fh:
+                callback = fh.read()     
+        BaseModule.__init__(self,"KBDevUtils."+study_name,config,codebase+"/chenry_utility_module/",str(Path.home()) + "/scratch/" + study_name,token,{"Workspace":Workspace(wsurl, token=token)},callback)
         self.version = "0.1.1.kbdu"
         self.study_name = study_name
         print("Output files printed to:"+self.out_dir()+" when using KBDevUtils.out_dir()")
@@ -60,7 +67,7 @@ class KBDevUtils(BaseModule):
     def msseedrecon(self):
         if self.msrecon == None:
             from ModelSEEDReconstruction.modelseedrecon import ModelSEEDRecon
-            self.msrecon = ModelSEEDRecon(self.config,self.config["module_directory"]+"/KB-ModelSEEDReconstruction/",self.working_dir,self.token,self.clients,self.callback_url)
+            self.msrecon = ModelSEEDRecon(self.config,codebase+"/KB-ModelSEEDReconstruction/",self.working_dir,self.token,self.clients,self.callback_url)
         return self.msrecon
     
     def devutil_client(self):
