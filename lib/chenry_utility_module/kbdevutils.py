@@ -130,8 +130,9 @@ class KBDevUtils(BaseModule):
     def print_json_file(self,filename,data):
         if filename[0] != "/":
             filename = self.output_dir+"/"+filename
-        if not exists(filename):
-            os.makedirs(filename, exist_ok=True)
+        path = os.path.basename(filename)
+        if not exists(path):
+            os.makedirs(path, exist_ok=True)
         print("Saving json file in:"+filename)
         with open(filename, 'w') as f:
             json.dump(data,f,indent=4,skipkeys=True)
