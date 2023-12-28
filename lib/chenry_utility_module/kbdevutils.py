@@ -123,7 +123,7 @@ class KBDevUtils(BaseModule):
     
     def set_token(self,token):
         self.check_kbase_dir()
-        with open(self.token_file(), 'w') as fh:
+        with open(self.token_file, 'w') as fh:
             fh.write(token)
 
         
