@@ -56,7 +56,8 @@ class KBDevUtils(BaseModule):
             self.output_root = self.config.get("output_root","KBaseAnalysis/")
         if self.output_root[0] != "/":
             self.output_root = str(Path.home())+"/"+self.output_root
-        print("Output files printed to:"+self.out_dir()+" when using KBDevUtils.out_dir()")
+        self.output_dir = self.out_dir()
+        print("Output files printed to:"+self.out_dir()+" when using KBDevUtils.output_dir")
         self.version = "0.1.1.kbdu"
         self.msrecon = None
     
