@@ -6,20 +6,6 @@ import os
 from os.path import exists
 from pathlib import Path
 from configparser import ConfigParser
-
-codebase = os.environ.get("CODE_BASE","/scratch/shared/code")
-config_file = os.environ.get("KBDEVUTIL_CONFIG", codebase+"/sharedconfig.cfg")
-config_parse = ConfigParser()
-config_parse.read(config_file)
-config = {}
-for nameval in config_parse.items("DevEnv"):
-    config[nameval[0]] = nameval[1]
-paths = config["syspaths"].split(";")
-for i,filepath in enumerate(paths):
-    if filepath[0:1] != "/":
-        paths[i] = codebase+"/"+filepath
-sys.path = paths + sys.path
-
 from installed_clients.WorkspaceClient import Workspace
 from kbbasemodules.basemodule import BaseModule
 import logging
@@ -29,45 +15,91 @@ logging.basicConfig(format='%(created)s %(levelname)s: %(message)s',
                             level=logging.INFO)
 
 class KBDevUtils(BaseModule):
-    def __init__(self,study_name,token_file=str(Path.home()) + '/.kbase/token',ws_version="prod",sdkhome=None,output_root=None):
-        wsurl = None
-        if ws_version == "prod":
-            wsurl = "https://kbase.us/services/ws"
-        elif ws_version == "appdev":
-            wsurl = "https://appdev.kbase.us/services/ws"
-        elif ws_version == "ci":
-            wsurl = "https://ci.kbase.us/services/ws"    
-        token = None
-        with open(token_file, 'r') as fh:
-            token = fh.read().strip()
-        self.root_path = config.get("callback_path","")    
+    def __init__(self,study_name,token_file=str(Path.home()) + '/.kbase/token',config_file=str(Path.home()) + '/.kbase/config',ws_version="prod",sdkhome=None,output_root=None):
+        # Setting up filenames and checking for existence
+        self.token_file = token_file
+        if not exists(self.token_file):
+            logger.critical("Token file not found! Use the kbdevutils.set_token(<token>) to create the file!")
+        self.config_file = config_file
+        if not exists(self.config_file):
+            logger.critical("You must create a config file in ~/.kbase/config before running this notebook. See instructions: https://docs.google.com/document/d/1fQ6iS_uaaZKbjWtw1MgzqilklttIibNO9XIIJWgxWKo/edit")
+            sys.exit(1)
+        # Loading config file
+        confighash = self.read_config()
+        # Setting up workspace URL
+        self.ws_version = ws_version
+        self.wsurl = self.get_wsurl_from_version(self.ws_version)
+        # Setting up token
+        token = self.read_token()
+        # Setting up paths
+        self.codebase = confighash.get("codebase","")
+        # Running BaseModule init
+        self.study_name = study_name
+        # Getting callback url
+        self.root_path = confighash.get("callback_path","")
+        # Setting up SDK home
+        self.sdkhome = sdkhome
+        if not self.sdkhome:
+            if self.ws_version == "prod":
+                self.sdkhome = confighash.get("prod_sdk_home","prod")
+            elif self.ws_version == "appdev":
+                self.sdkhome = confighash.get("appdev_sdk_home","appdev")
+        # Setting callback directories
+        self.callback_file = self.root_path+"/"+self.sdkhome+"/kb_sdk_home/run_local/workdir/CallBack.txt"
+        self.working_directory = self.root_path+"/"+self.sdkhome+"/kb_sdk_home/run_local/workdir/tmp/"
+        callback = self.read_callback()
+        # Initializing BaseModule
+        BaseModule.__init__(self,"KBDevUtils."+self.study_name,confighash,self.codebase+"/chenry_utility_module/",str(Path.home()) + "/scratch/" + study_name,token,{"Workspace":Workspace(self.wsurl, token=token)},callback)
         if output_root:
             self.output_root = output_root
         else:
-            self.output_root = config.get("output_root","KBaseAnalysis/")
+            self.output_root = self.config.get("output_root","KBaseAnalysis/")
         if self.output_root[0] != "/":
             self.output_root = str(Path.home())+"/"+self.output_root
-        if not sdkhome:
-            if ws_version == "prod":
-                sdkhome = config.get("prod_sdk_home","prod")
-            elif ws_version == "appdev":
-                sdkhome = config.get("appdev_sdk_home","appdev")
-        self.callback_file = self.root_path+"/"+sdkhome+"/kb_sdk_home/run_local/workdir/CallBack.txt"
-        self.working_directory = self.root_path+"/"+sdkhome+"/kb_sdk_home/run_local/workdir/tmp/"
+        print("Output files printed to:"+self.out_dir()+" when using KBDevUtils.out_dir()")
+        self.version = "0.1.1.kbdu"
+        self.msrecon = None
+    
+    def get_wsurl_from_version(self,version):
+        if version == "prod":
+            return "https://kbase.us/services/ws"
+        elif version == "appdev":
+            return "https://appdev.kbase.us/services/ws"
+        elif version == "ci":
+            return "https://ci.kbase.us/services/ws"
+        else:
+            logger.critical("Unknown workspace version: "+version)
+            return "https://kbase.us/services/ws"
+
+    def read_config(self):
+        confighash = {}
+        config = ConfigParser()
+        config.read(self.config_file)
+        for nameval in config.items("DevEnv"):
+            confighash[nameval[0]] = nameval[1]
+        return confighash
+
+    def read_token(self):
+        token = None
+        with open(self.token_file, 'r') as fh:
+            token = fh.read().strip()
+        return token
+
+    def read_callback(self):
         callback = None
         if exists(self.callback_file):
             with open(self.callback_file, 'r') as fh:
-                callback = fh.read()     
-        BaseModule.__init__(self,"KBDevUtils."+study_name,config,codebase+"/chenry_utility_module/",str(Path.home()) + "/scratch/" + study_name,token,{"Workspace":Workspace(wsurl, token=token)},callback)
-        self.version = "0.1.1.kbdu"
-        self.study_name = study_name
-        print("Output files printed to:"+self.out_dir()+" when using KBDevUtils.out_dir()")
-        self.msrecon = None
+                callback = fh.read()
+        return callback
+
+    def check_kbase_dir(self):
+        if not exists(str(Path.home()) + '/.kbase'):
+            os.makedirs(str(Path.home()) + '/.kbase')
     
     def msseedrecon(self):
         if self.msrecon == None:
             from ModelSEEDReconstruction.modelseedrecon import ModelSEEDRecon
-            self.msrecon = ModelSEEDRecon(self.config,codebase+"/KB-ModelSEEDReconstruction/",self.working_dir,self.token,self.clients,self.callback_url)
+            self.msrecon = ModelSEEDRecon(self.config,self.codebase+"/KB-ModelSEEDReconstruction/",self.working_dir,self.token,self.clients,self.callback_url)
         return self.msrecon
     
     def devutil_client(self):
@@ -88,4 +120,10 @@ class KBDevUtils(BaseModule):
             if not exists(output_path):
                 os.makedirs(output_path, exist_ok=True)
         return output_path
+    
+    def set_token(self,token):
+        self.check_kbase_dir()
+        with open(self.token_file(), 'w') as fh:
+            fh.write(token)
+
         
