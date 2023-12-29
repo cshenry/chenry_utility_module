@@ -44,20 +44,23 @@ class KBDevUtils(BaseModule):
                 self.sdkhome = confighash.get("prod_sdk_home","prod")
             elif self.ws_version == "appdev":
                 self.sdkhome = confighash.get("appdev_sdk_home","appdev")
+        # Setting up output directory
+        if output_root:
+            self.output_root = output_root
+        else:
+            self.output_root = confighash.get("output_root","KBaseAnalysis/")
+        if self.output_root[0] != "/":
+            self.output_root = str(Path.home())+"/"+self.output_root
+        self.set_study_root()
+        # Setting the session from file
+        self.read_session()
+        print("Output files printed to:"+self.output_dir+" when using KBDevUtils.output_dir")
         # Setting callback directories
         self.callback_file = self.root_path+"/"+self.sdkhome+"/kb_sdk_home/run_local/workdir/CallBack.txt"
         self.working_directory = self.root_path+"/"+self.sdkhome+"/kb_sdk_home/run_local/workdir/tmp/"
         callback = self.read_callback()
         # Initializing BaseModule
         BaseModule.__init__(self,"KBDevUtils."+self.study_name,confighash,self.codebase+"/chenry_utility_module/",str(Path.home()) + "/scratch/" + study_name,token,{"Workspace":Workspace(self.wsurl, token=token)},callback)
-        if output_root:
-            self.output_root = output_root
-        else:
-            self.output_root = self.config.get("output_root","KBaseAnalysis/")
-        if self.output_root[0] != "/":
-            self.output_root = str(Path.home())+"/"+self.output_root
-        self.output_dir = self.out_dir()
-        print("Output files printed to:"+self.out_dir()+" when using KBDevUtils.output_dir")
         self.version = "0.1.1.kbdu"
         self.msrecon = None
     
@@ -115,25 +118,78 @@ class KBDevUtils(BaseModule):
     def sdk_dir_perms(self):
         return self.devutil_client().run_command({"command":"perms"})
     
-    def out_dir(self,create=True):
-        output_path = self.output_root+"/"+self.study_name+"/"
-        if create:
-            if not exists(output_path):
-                os.makedirs(output_path, exist_ok=True)
-        return output_path
+    def set_study_root(self,create=True):
+        self.study_root = self.output_root+"/"+self.study_name+"/"
+        if not exists(self.study_root):
+            os.makedirs(self.study_root, exist_ok=True)
     
     def set_token(self,token):
         self.check_kbase_dir()
         with open(self.token_file, 'w') as fh:
             fh.write(token)
 
-    def print_json_file(self,filename,data):
-        if filename[0] != "/":
-            filename = self.output_dir+"/"+filename
-        path = os.path.basename(filename)
-        if not exists(path):
-            os.makedirs(path, exist_ok=True)
-        print("Saving json file in:"+filename)
+    # Code related to sessions
+    def list_sessions(self):
+        if exists(self.study_root+"/sessions"):
+            return os.listdir(self.study_root+"/sessions")
+        else:
+            return []
+    
+    def read_session(self):
+        session = "default"
+        if exists(self.study_root+"/session"):
+            with open(self.study_root+"/session", 'r') as fh:
+                session = fh.read()
+        else:
+            self.set_session(session)
+        return session
+    
+    def create_session(self,name):
+        if not exists(self.study_root+"/sessions/"+name+"/data"):
+            os.makedirs(self.study_root+"/sessions/"+name+"/data", exist_ok=True)
+            os.makedirs(self.study_root+"/sessions/"+name+"/output", exist_ok=True)
+
+    def set_session(self,name):
+        if not exists(self.study_root+"/sessions/"+name):
+            self.create_session(name)
+        with open(self.study_root+"/session", 'w') as fh:
+            fh.write(name)
+        self.session = name
+        self.output_dir = self.study_root+"/sessions/"+name+"/output"
+        self.data_dir = self.study_root+"/sessions/"+name+"/data"
+
+    def copy_session(self,source,target):
+        source_dir = source
+        if source_dir[0] != "/":
+            source_dir = self.study_root+"/sessions/"+source
+        if not exists(self.study_root+"/sessions/"+source):
+            logger.critical("Source session does not exist!")
+        elif exists(self.study_root+"/sessions/"+target):
+            logger.critical("Target session already exists!")
+        else:
+            os.system("cp -r "+source_dir+" "+self.study_root+"/sessions/"+target)
+
+    def clear_session(self,name=None):
+        if not name:
+            name = self.session
+        if exists(self.study_root+"/sessions/"+name):
+            os.system("rm -r "+self.study_root+"/sessions/"+name)
+        else:
+            logger.critical("Session "+name+" does not exist!")
+
+    # Code for saving and loading data
+    def save(self,name,data):
+        filename = self.data_dir + "/" + name + ".json"
         with open(filename, 'w') as f:
             json.dump(data,f,indent=4,skipkeys=True)
+
+    def load(self,name):
+        filename = self.data_dir + "/" + name + ".json"
+        with open(filename, 'r') as f:
+            return json.load(f)
+        
+    def list(self):
+        files = os.listdir(self.data_dir)
+        return [x.split(".")[0] for x in files if x.endswith(".json")]
+
         
