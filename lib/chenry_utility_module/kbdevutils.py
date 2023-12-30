@@ -143,6 +143,8 @@ class KBDevUtils(BaseModule):
                 session = fh.read()
         else:
             self.set_session(session)
+        self.output_dir = self.study_root+"/sessions/"+name+"/output"
+        self.data_dir = self.study_root+"/sessions/"+name+"/data"
         return session
     
     def create_session(self,name):
