@@ -53,6 +53,7 @@ class KBDevUtils(BaseModule):
             self.output_root = str(Path.home())+"/"+self.output_root
         self.set_study_root()
         # Setting the session from file
+        self.output_dir = None
         self.read_session()
         print("Output files printed to:"+self.output_dir+" when using KBDevUtils.output_dir")
         # Setting callback directories
