@@ -195,4 +195,5 @@ class KBDevUtils(BaseModule):
         files = os.listdir(self.data_dir)
         return [x.split(".")[0] for x in files if x.endswith(".json")]
 
-        
+    def exists(self,name):
+        return exists(self.data_dir + "/" + name + ".json")    
