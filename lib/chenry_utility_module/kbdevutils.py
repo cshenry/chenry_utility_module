@@ -51,10 +51,9 @@ class KBDevUtils(BaseModule):
             self.output_root = confighash.get("output_root","KBaseAnalysis/")
         if self.output_root[0] != "/":
             self.output_root = str(Path.home())+"/"+self.output_root
-        self.set_study_root()
-        # Setting the session from file
         self.output_dir = None
-        self.read_session()
+        self.data_dir = None
+        self.set_study_root()
         print("Output files printed to:"+self.output_dir+" when using KBDevUtils.output_dir")
         # Setting callback directories
         self.callback_file = self.root_path+"/"+self.sdkhome+"/kb_sdk_home/run_local/workdir/CallBack.txt"
@@ -123,62 +122,15 @@ class KBDevUtils(BaseModule):
         self.study_root = self.output_root+"/"+self.study_name+"/"
         if not exists(self.study_root):
             os.makedirs(self.study_root, exist_ok=True)
+        self.data_dir = self.study_root + "datacache"
+        os.makedirs(self.data_dir, exist_ok=True)
+        self.output_dir = self.study_root + "nboutput"
+        os.makedirs(self.output_dir, exist_ok=True)
     
     def set_token(self,token):
         self.check_kbase_dir()
         with open(self.token_file, 'w') as fh:
             fh.write(token)
-
-    # Code related to sessions
-    def list_sessions(self):
-        if exists(self.study_root+"/sessions"):
-            return os.listdir(self.study_root+"/sessions")
-        else:
-            return []
-    
-    def read_session(self):
-        session = "default"
-        if exists(self.study_root+"/session"):
-            with open(self.study_root+"/session", 'r') as fh:
-                session = fh.read()
-        else:
-            self.set_session(session)
-        self.output_dir = self.study_root+"/sessions/"+session+"/output"
-        self.data_dir = self.study_root+"/sessions/"+session+"/data"
-        return session
-    
-    def create_session(self,name):
-        if not exists(self.study_root+"/sessions/"+name+"/data"):
-            os.makedirs(self.study_root+"/sessions/"+name+"/data", exist_ok=True)
-            os.makedirs(self.study_root+"/sessions/"+name+"/output", exist_ok=True)
-
-    def set_session(self,name):
-        if not exists(self.study_root+"/sessions/"+name):
-            self.create_session(name)
-        with open(self.study_root+"/session", 'w') as fh:
-            fh.write(name)
-        self.session = name
-        self.output_dir = self.study_root+"/sessions/"+name+"/output"
-        self.data_dir = self.study_root+"/sessions/"+name+"/data"
-
-    def copy_session(self,source,target):
-        source_dir = source
-        if source_dir[0] != "/":
-            source_dir = self.study_root+"/sessions/"+source
-        if not exists(self.study_root+"/sessions/"+source):
-            logger.critical("Source session does not exist!")
-        elif exists(self.study_root+"/sessions/"+target):
-            logger.critical("Target session already exists!")
-        else:
-            os.system("cp -r "+source_dir+" "+self.study_root+"/sessions/"+target)
-
-    def clear_session(self,name=None):
-        if not name:
-            name = self.session
-        if exists(self.study_root+"/sessions/"+name):
-            os.system("rm -r "+self.study_root+"/sessions/"+name)
-        else:
-            logger.critical("Session "+name+" does not exist!")
 
     # Code for saving and loading data
     def save(self,name,data):
