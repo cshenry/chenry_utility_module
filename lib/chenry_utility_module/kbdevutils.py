@@ -60,7 +60,7 @@ class KBDevUtils(BaseModule):
         self.working_directory = self.root_path+"/"+self.sdkhome+"/kb_sdk_home/run_local/workdir/tmp/"
         callback = self.read_callback()
         # Initializing BaseModule
-        BaseModule.__init__(self,"KBDevUtils."+self.study_name,confighash,self.codebase+"/chenry_utility_module/",str(Path.home()) + "/scratch/" + study_name,token,{"Workspace":Workspace(self.wsurl, token=token)},callback)
+        BaseModule.__init__(self,"KBDevUtils."+self.study_name,confighash,module_dir=self.codebase+"/chenry_utility_module/",working_dir=self.working_directory,token=token,clients={"Workspace":Workspace(self.wsurl, token=token)},callback=callback)
         self.version = "0.1.1.kbdu"
         self.msrecon = None
     
