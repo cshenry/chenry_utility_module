@@ -103,7 +103,8 @@ class KBDevUtils(BaseModule):
     def msseedrecon(self):
         if self.msrecon == None:
             from ModelSEEDReconstruction.modelseedrecon import ModelSEEDRecon
-            self.msrecon = ModelSEEDRecon(self.config,self.codebase+"/KB-ModelSEEDReconstruction/",self.working_dir,self.token,self.clients,self.callback_url)
+            print("ModelSEED:",self.working_dir)
+            self.msrecon = ModelSEEDRecon(self.config,module_dir=self.codebase+"/KB-ModelSEEDReconstruction/",working_dir=self.working_dir,token=self.token,clients=self.clients,callback=self.callback_url)
         return self.msrecon
     
     def devutil_client(self):
