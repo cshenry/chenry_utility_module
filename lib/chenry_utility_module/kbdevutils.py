@@ -56,8 +56,8 @@ class KBDevUtils(BaseModule):
         self.set_study_root()
         print("Output files printed to:"+self.output_dir+" when using KBDevUtils.output_dir")
         # Setting callback directories
-        self.callback_file = self.root_path+"/"+self.sdkhome+"/kb_sdk_home/run_local/workdir/CallBack.txt"
-        self.working_directory = self.root_path+"/"+self.sdkhome+"/kb_sdk_home/run_local/workdir/tmp/"
+        self.callback_file = self.root_path+"/"+self.sdkhome+"/run_local/workdir/CallBack.txt"
+        self.working_directory = self.root_path+"/"+self.sdkhome+"/run_local/workdir/tmp/"
         callback = self.read_callback()
         # Initializing BaseModule
         BaseModule.__init__(self,"KBDevUtils."+self.study_name,confighash,module_dir=self.codebase+"/chenry_utility_module/",working_dir=self.working_directory,token=token,clients={"Workspace":Workspace(self.wsurl, token=token)},callback=callback)
