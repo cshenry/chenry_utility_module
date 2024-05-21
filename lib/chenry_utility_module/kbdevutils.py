@@ -139,8 +139,13 @@ class KBDevUtils(BaseModule):
         with open(filename, 'w') as f:
             json.dump(data,f,indent=4,skipkeys=True)
 
-    def load(self,name):
+    def load(self,name,default=None):
         filename = self.data_dir + "/" + name + ".json"
+        if not exists(filename):
+            if default == None:
+                logger.error("Requested data "+name+" doesn't exist at "+filename)
+                raise(ValueError("Requested data "+name+" doesn't exist at "+filename))
+            return default
         with open(filename, 'r') as f:
             return json.load(f)
         
