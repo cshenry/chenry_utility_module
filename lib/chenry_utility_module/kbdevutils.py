@@ -19,7 +19,7 @@ class KBDevUtils(BaseModule):
         # Setting up filenames and checking for existence
         self.token_file = token_file
         if not exists(self.token_file):
-            logger.critical("Token file not found! Use the kbdevutils.set_token(<token>) to create the file!")
+            logger.critical("Token file not found! Use the util.set_token(<token>) to create the file!")
         self.config_file = config_file
         if not exists(self.config_file):
             logger.critical("You must create a config file in ~/.kbase/config before running this notebook. See instructions: https://docs.google.com/document/d/1fQ6iS_uaaZKbjWtw1MgzqilklttIibNO9XIIJWgxWKo/edit")
@@ -62,8 +62,15 @@ class KBDevUtils(BaseModule):
         # Initializing BaseModule
         BaseModule.__init__(self,"KBDevUtils."+self.study_name,confighash,module_dir=self.codebase+"/chenry_utility_module/",working_dir=self.working_directory,token=token,clients={"Workspace":Workspace(self.wsurl, token=token)},callback=callback)
         self.version = "0.1.1.kbdu"
-        self.msrecon = None
+        self._msrecon = None
     
+    @property
+    def msrecon(self):
+        if self._msrecon is None:
+            from ModelSEEDReconstruction.modelseedrecon import ModelSEEDRecon
+            self._msrecon = ModelSEEDRecon(self.config,module_dir=self.codebase+"/KB-ModelSEEDReconstruction/",working_dir=self.working_dir,token=self.token,clients=self.clients,callback=self.callback_url)
+        return self._msrecon
+
     def get_wsurl_from_version(self,version):
         if version == "prod":
             return "https://kbase.us/services/ws"
@@ -100,13 +107,6 @@ class KBDevUtils(BaseModule):
         if not exists(str(Path.home()) + '/.kbase'):
             os.makedirs(str(Path.home()) + '/.kbase')
     
-    def msseedrecon(self):
-        if self.msrecon == None:
-            from ModelSEEDReconstruction.modelseedrecon import ModelSEEDRecon
-            print("ModelSEED:",self.working_dir)
-            self.msrecon = ModelSEEDRecon(self.config,module_dir=self.codebase+"/KB-ModelSEEDReconstruction/",working_dir=self.working_dir,token=self.token,clients=self.clients,callback=self.callback_url)
-        return self.msrecon
-    
     def devutil_client(self):
         if "KBDevUtils" not in self.clients:
             from installed_clients.chenry_utility_moduleClient import chenry_utility_module
@@ -136,6 +136,8 @@ class KBDevUtils(BaseModule):
     # Code for saving and loading data
     def save(self,name,data):
         filename = self.data_dir + "/" + name + ".json"
+        dir = os.path.dirname(filename)
+        os.makedirs(dir, exist_ok=True)
         with open(filename, 'w') as f:
             json.dump(data,f,indent=4,skipkeys=True)
 
@@ -154,4 +156,18 @@ class KBDevUtils(BaseModule):
         return [x.split(".")[0] for x in files if x.endswith(".json")]
 
     def exists(self,name):
-        return exists(self.data_dir + "/" + name + ".json")    
+        return exists(self.data_dir + "/" + name + ".json")
+
+    # Code for printing object attributes and functions
+    def object_attributes(self,obj,properties=True,functions=True):
+        attributes = dir(obj)
+        if properties:
+            print("Properties:")
+            properties = [attr for attr in attributes if not callable(getattr(obj, attr))]
+            for property in properties:
+                print(f"{property}")
+        if functions:
+            print("Functions:")
+            functions = [attr for attr in attributes if callable(getattr(obj, attr))]
+            for func in functions:
+                print(f"{func}")
