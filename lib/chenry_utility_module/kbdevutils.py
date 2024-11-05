@@ -63,6 +63,7 @@ class KBDevUtils(BaseModule):
         BaseModule.__init__(self,"KBDevUtils."+self.study_name,confighash,module_dir=self.codebase+"/chenry_utility_module/",working_dir=self.working_directory,token=token,clients={"Workspace":Workspace(self.wsurl, token=token)},callback=callback)
         self.version = "0.1.1.kbdu"
         self._msrecon = None
+        self._kb_object_factory = None
     
     @property
     def msrecon(self):
@@ -70,6 +71,13 @@ class KBDevUtils(BaseModule):
             from ModelSEEDReconstruction.modelseedrecon import ModelSEEDRecon
             self._msrecon = ModelSEEDRecon(self.config,module_dir=self.codebase+"/KB-ModelSEEDReconstruction/",working_dir=self.working_dir,token=self.token,clients=self.clients,callback=self.callback_url)
         return self._msrecon
+    
+    @property
+    def kb_object_factory(self):
+        if self._kb_object_factory is None:
+            from cobrakbase.core.kbase_object_factory import KBaseObjectFactory
+            self._kb_object_factory = KBaseObjectFactory()
+        return self._kb_object_factory
 
     def get_wsurl_from_version(self,version):
         if version == "prod":
@@ -141,7 +149,7 @@ class KBDevUtils(BaseModule):
         with open(filename, 'w') as f:
             json.dump(data,f,indent=4,skipkeys=True)
 
-    def load(self,name,default=None):
+    def load(self,name,default=None,kb_type=None):
         filename = self.data_dir + "/" + name + ".json"
         if not exists(filename):
             if default == None:
@@ -149,7 +157,10 @@ class KBDevUtils(BaseModule):
                 raise(ValueError("Requested data "+name+" doesn't exist at "+filename))
             return default
         with open(filename, 'r') as f:
-            return json.load(f)
+            data = json.load(f)
+        if kb_type != None:
+            data = self.kb_object_factory._build_object(kb_type, data, None, None)
+        return data
         
     def list(self):
         files = os.listdir(self.data_dir)
